@@ -1,5 +1,6 @@
 #!/bin/sh
-HOST_IP=$(ip route show | grep default | awk 'NR=1 {print $3}')
+#HOST_IP=$(ip route show | grep default | awk 'NR=1 {print $3}')
+HOST_IP=127.0.0.1
 HOSTNAME=$(hostname | tr - _)
 DOTNO=$(expr index $HOSTNAME . - 1)
 if [ $DOTNO -gt 0 ]; then
