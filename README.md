@@ -53,3 +53,20 @@ ExecStop=/bin/docker -H unix:///var/run/early-docker.sock stop tinc
 [Install]
 WantedBy=early-docker.target
 ```
+
+```
+[Unit]
+Description=tinc vpn
+Requires=etcd2.service
+After=etcd2.service
+Before=flanneld.service
+
+[Service]
+Restart=always
+RestartSec=10
+ExecStartPre=-/bin/rkt rm tinc
+ExecStart=/bin/rkt run --name tinc --insecure-options=paths,image --net=host --dns 8.8.8.8 docker://ahrotahntee/automatic-tinc:latest --caps-retain CAP_NET_ADMIN,CAP_NET_BIND_SERVICE
+ExecStop=/bin/rkt stop tinc
+
+[Install]
+WantedBy=network-online.target
