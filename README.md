@@ -35,6 +35,7 @@ Hosts/Net: 524,286               (Private Internet)
 
 Example Service Unit
 ======
+Sample unit file using early-docker. (Deprecated in latest CoreOS alpha)
 ```
 [Unit]
 Description=tinc vpn
@@ -54,6 +55,7 @@ ExecStop=/bin/docker -H unix:///var/run/early-docker.sock stop tinc
 WantedBy=early-docker.target
 ```
 
+Sample unit file using rkt.
 ```
 [Unit]
 Description=tinc vpn
