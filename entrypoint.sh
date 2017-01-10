@@ -108,6 +108,7 @@ EOF
   publishConfig
 
   touch /etc/tinc/.setup-complete
+  sleep 5
 }
 
 start () {
@@ -130,6 +131,7 @@ monitor () {
 }
 
 setup
+updatePeers
 monitor &
 start &
 PID="$!"
