@@ -8,13 +8,13 @@ if [ $DOTNO -gt 0 ]; then
 fi
 
 publishConfig () {
-  curl -XPUT "http://$HOST_IP:4001/v2/keys/tinc-vpn.org/peers/$HOSTNAME/config" --data-urlencode value@/etc/tinc/hosts/$HOSTNAME
-  curl -XPUT "http://$HOST_IP:4001/v2/keys/tinc-vpn.org/peers/$HOSTNAME/private_ip" -d value=$PRIVATE_IP
+  curl -Ss -XPUT "http://$HOST_IP:4001/v2/keys/tinc-vpn.org/peers/$HOSTNAME/config" --data-urlencode value@/etc/tinc/hosts/$HOSTNAME
+  curl -Ss -XPUT "http://$HOST_IP:4001/v2/keys/tinc-vpn.org/peers/$HOSTNAME/private_ip" -d value=$PRIVATE_IP
 }
 
 updatePeers () {
   echo "[NOTICE] Updating peer configs"
-  CONFIG_DATA=$(curl http://$HOST_IP:4001/v2/keys/tinc-vpn.org/peers?recursive=true)
+  CONFIG_DATA=$(curl -Ss "http://$HOST_IP:4001/v2/keys/tinc-vpn.org/peers?recursive=true")
   PEERS=$(echo $CONFIG_DATA | jq '.node.nodes[].key' | tr -d '"')
   for peer in $PEERS; do
     CONFIG=$(echo $CONFIG_DATA | jq '.node.nodes[] | select(.key == "'$peer'") | .nodes[] | select(.key == "'$peer/config'") | .value' | tr -d '"')
@@ -29,11 +29,11 @@ setup () {
 
   # Create initial structure (if not exist)
   mkdir /etc/tinc/hosts -p
-  curl -XPUT "http://$HOST_IP:4001/v2/keys/tinc-vpn.org/peers/?dir=true&prevExist=false"
-  curl -XPUT "http://$HOST_IP:4001/v2/keys/tinc-vpn.org/next_ip?prevExist=false" -d value=172.16.0.1
+  curl -Ss -XPUT "http://$HOST_IP:4001/v2/keys/tinc-vpn.org/peers/?dir=true&prevExist=false"
+  curl -Ss -XPUT "http://$HOST_IP:4001/v2/keys/tinc-vpn.org/next_ip?prevExist=false" -d value=172.16.0.1
  
   # Retrieve the next available IP address
-  export PRIVATE_IP=$(curl "http://$HOST_IP:4001/v2/keys/tinc-vpn.org/next_ip" | jq '.node.value' | tr -d '"')
+  export PRIVATE_IP=$(curl -Ss "http://$HOST_IP:4001/v2/keys/tinc-vpn.org/next_ip" | jq '.node.value' | tr -d '"')
 
   # Increment the next available IP address
   OV=$(echo $PRIVATE_IP | cut -d. -f2)
@@ -59,7 +59,7 @@ setup () {
 
     # Instruct future clients that this IP is used
     echo "[NOTICE] Instructing etcd to reserve it"
-    RESULT=$(curl -XPUT "http://$HOST_IP:4001/v2/keys/tinc-vpn.org/next_ip?prevValue=$PRIVATE_IP" -d value=$NEXT_IP | jq '.errorcode')
+    RESULT=$(curl -Ss -XPUT "http://$HOST_IP:4001/v2/keys/tinc-vpn.org/next_ip?prevValue=$PRIVATE_IP" -d value=$NEXT_IP | jq '.errorcode')
     if [ $RESULT == "101" ]; then
       echo "[NOTICE] Someone grabbed the IP address first, trying again"
       sleep 1
@@ -71,7 +71,7 @@ setup () {
   updatePeers
 
   echo "[NOTICE] Building local configs"
-  CONFIG_DATA=$(curl http://$HOST_IP:4001/v2/keys/tinc-vpn.org/peers?recursive=true)
+  CONFIG_DATA=$(curl -Ss "http://$HOST_IP:4001/v2/keys/tinc-vpn.org/peers?recursive=true")
   PEERS=$(echo $CONFIG_DATA | jq '.node.nodes[].key' | tr -d '"')
   PUBLIC_IP=$(dig +short myip.opendns.com @resolver1.opendns.com)
   cat << EOF > /etc/tinc/tinc.conf
@@ -116,7 +116,7 @@ start () {
 
 monitor () {
   while true; do
-    curl "http://$HOST_IP:4001/v2/keys/tinc-vpn.org/peers/?wait=true&recursive=true"
+    curl -Ss "http://$HOST_IP:4001/v2/keys/tinc-vpn.org/peers/?wait=true&recursive=true"
 
     # Don't fetch peers if curl returns an error
     if [ $? -ne 0 ]; then
@@ -130,9 +130,9 @@ monitor () {
 }
 
 setup
+monitor &
 start &
 PID="$!"
-monitor &
 
 trap "kill -INT $PID" SIGINT
 trap "kill -ALRM $PID" SIGALRM
@@ -141,6 +141,4 @@ trap "kill -INT $PID" SIGINT
 trap "kill -USR1 $PID" SIGUSR1
 trap "kill -USR2 $PID" SIGUSR2
 trap "kill -WINCH $PID" SIGWINCH
-ps -a
-echo "PID: $PID"
 wait $PID
