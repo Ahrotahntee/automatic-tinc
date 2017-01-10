@@ -66,9 +66,7 @@ Before=flanneld.service
 [Service]
 Restart=always
 RestartSec=10
-ExecStartPre=-/bin/rkt rm tinc
-ExecStart=/bin/rkt run --name tinc --insecure-options=paths,image --net=host --dns 8.8.8.8 docker://ahrotahntee/automatic-tinc:latest --caps-retain CAP_NET_ADMIN,CAP_NET_BIND_SERVICE
-ExecStop=/bin/rkt stop tinc
+ExecStart=/bin/rkt run --hostname %H --insecure-options=paths,image --net=host --dns 8.8.8.8 docker://ahrotahntee/automatic-tinc:latest --caps-retain CAP_NET_ADMIN,CAP_NET_BIND_SERVICE
 
 [Install]
 WantedBy=network-online.target
