@@ -59,6 +59,7 @@ setup () {
 
     # Instruct future clients that this IP is used
     echo "[NOTICE] Instructing etcd to reserve it"
+    sleep 0.$RANDOM
     RESULT=$(curl -Ss -XPUT "http://$HOST_IP:4001/v2/keys/tinc-vpn.org/next_ip?prevValue=$PRIVATE_IP" -d value=$NEXT_IP | jq '.errorcode')
     if [ $RESULT == "101" ]; then
       echo "[NOTICE] Someone grabbed the IP address first, trying again"
