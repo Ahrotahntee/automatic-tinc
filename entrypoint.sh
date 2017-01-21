@@ -32,14 +32,14 @@ setup () {
   curl -Ss -XPUT "http://$HOST_IP:4001/v2/keys/tinc-vpn.org/peers/?dir=true&prevExist=false"
   curl -Ss -XPUT "http://$HOST_IP:4001/v2/keys/tinc-vpn.org/next_ip?prevExist=false" -d value=172.16.0.1
  
-  # Retrieve the next available IP address
-  export PRIVATE_IP=$(curl -Ss "http://$HOST_IP:4001/v2/keys/tinc-vpn.org/next_ip" | jq '.node.value' | tr -d '"')
-
-  # Increment the next available IP address
-  OV=$(echo $PRIVATE_IP | cut -d. -f2)
-  MV=$(echo $PRIVATE_IP | cut -d. -f3)
-  IV=$(echo $PRIVATE_IP | cut -d. -f4)
   while true; do
+    # Retrieve the next available IP address
+    export PRIVATE_IP=$(curl -Ss "http://$HOST_IP:4001/v2/keys/tinc-vpn.org/next_ip" | jq '.node.value' | tr -d '"')
+
+    # Increment the next available IP address
+    OV=$(echo $PRIVATE_IP | cut -d. -f2)
+    MV=$(echo $PRIVATE_IP | cut -d. -f3)
+    IV=$(echo $PRIVATE_IP | cut -d. -f4)
     echo "[NOTICE] This client will have IP $PRIVATE_IP"
     if [ $IV -eq 255 ]; then
       if [ $MV -eq 255 ]; then
