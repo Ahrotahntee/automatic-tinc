@@ -7,6 +7,16 @@ if [ $DOTNO -gt 0 ]; then
   HOSTNAME=${HOSTNAME:0:$DOTNO}
 fi
 
+waitOnKeystore() {
+  while true; do
+    STATUS=curl -sS http://127.0.0.1:4001/health | jq '.health' | tr -d '"'
+    if [ "$STATUS" == "true" ]; then
+      break
+    fi
+    sleep 5
+  done
+}
+
 publishConfig () {
   curl -Ss -XPUT "http://$HOST_IP:4001/v2/keys/tinc-vpn.org/peers/$HOSTNAME/config" --data-urlencode value@/etc/tinc/hosts/$HOSTNAME
   curl -Ss -XPUT "http://$HOST_IP:4001/v2/keys/tinc-vpn.org/peers/$HOSTNAME/private_ip" -d value=$PRIVATE_IP
@@ -131,6 +141,7 @@ monitor () {
   done
 }
 
+waitOnKeystore
 setup
 updatePeers
 monitor &
