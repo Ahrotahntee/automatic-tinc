@@ -9,7 +9,7 @@ fi
 
 waitOnKeystore() {
   while true; do
-    STATUS=curl -sS http://127.0.0.1:4001/health | jq '.health' | tr -d '"'
+    STATUS=$(curl -sS http://127.0.0.1:4001/health | jq '.health' | tr -d '"')
     if [ "$STATUS" == "true" ]; then
       break
     fi
